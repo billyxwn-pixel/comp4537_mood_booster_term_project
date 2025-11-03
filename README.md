@@ -149,22 +149,23 @@ All services communicate via RESTful API calls.
 
 ## Milestone 1 Deliverables
 
-✅ User registration/login page (working)
-✅ Admin and user landing pages (after login)
-✅ ML/LLM hosted and working properly
-✅ Database setup with ERD/documentation
-✅ Authentication without third-party services
-✅ Security features (SQL injection, XSS protection)
+- complete: User registration/login page (working)
+- complete: Admin and user landing pages (after login)
+- complete: ML/LLM hosted and working properly
+- complete: Database setup with ERD/documentation
+- complete: Authentication without third-party services
+- complete: Security features (SQL injection, XSS protection)
 
 ## Team Information
 
-- **Group Number:** [Your Group Number]
-- **Team Members:** [Your Team Members]
+- **Group Number:** c6prj (by myself/my own term project)
+- **Team Members:** Billy Wei
 
 ## License
 
 This project is for educational purposes as part of COMP4537 term project.
 
 ## Support
+
 
 For setup issues, refer to [SETUP.md](./SETUP.md) or contact your instructor.
