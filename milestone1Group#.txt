@@ -1,0 +1,57 @@
+Project Title: Mood Booster Chatbot - AI-Powered Chatbot API Server
+
+Team Number: [INSERT YOUR GROUP NUMBER HERE]
+
+Team Members:
+
+Your Name ([INSERT YOUR NAME HERE])
+Brief explanation: [INSERT WHY YOU WERE CHOSEN - e.g., "Experience with JavaScript, Node.js, React, and RESTful API development. Strong understanding of database design and Python for ML services. Good time management and dedication to completing projects on time."]
+
+Project Idea:
+
+This project implements an AI-powered RESTful API server that provides a mood-boosting chatbot service. The system allows users to register and interact with an AI chatbot powered by GPT-2 model from HuggingFace. Users receive 20 free API calls, after which the service continues to work but displays a warning. The application follows a microservice architecture with three main components:
+
+1. Backend API Server (Node.js/Express): Handles user authentication, API endpoints, database operations, and communicates with the LLM service
+2. LLM Service (Python/Flask): Hosts the GPT-2 model from HuggingFace and generates conversational responses
+3. Frontend Client (React): Provides the user interface for login, registration, chat interaction, and admin dashboard
+
+The chatbot is designed to provide humorous, engaging, and mood-boosting responses to user messages, helping to improve users' emotional well-being through interactive conversations.
+
+Microservice Architecture Diagram (Rough Sketch):
+
+    ┌─────────────────┐
+    │   Frontend      │
+    │   (React)       │
+    │  Port: 5173     │
+    └────────┬────────┘
+             │
+             │ HTTP/REST API
+             │
+    ┌────────▼────────┐
+    │   Backend API   │
+    │  (Node.js/      │
+    │   Express)      │
+    │  Port: 3000     │
+    └────────┬────────┘
+             │
+    ┌────────┴────────┐
+    │                 │
+    │                 │
+    ▼                 ▼
+┌─────────┐      ┌──────────┐
+│Database │      │  LLM     │
+│(SQLite) │      │ Service  │
+│         │      │ (Flask)  │
+└─────────┘      │Port: 5000│
+                 │          │
+                 │  GPT-2   │
+                 │  Model   │
+                 └──────────┘
+
+Description:
+- Frontend and Backend are on separate origins (different domains when hosted)
+- Backend communicates with LLM Service via HTTP REST API
+- Backend manages all database operations
+- LLM Service hosts the pre-trained GPT-2 model from HuggingFace
+- All services can be hosted separately or together depending on hosting provider capabilities
+
