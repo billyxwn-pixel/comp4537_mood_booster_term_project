@@ -6,7 +6,7 @@ import axios from 'axios'
  */
 class ApiService {
   constructor(baseURL) {
-    this.baseURL = baseURL || 'http://localhost:3000'
+    this.baseURL = baseURL || 'https://mood-booster-backend.onrender.com'
     this.setupAxios()
   }
 
