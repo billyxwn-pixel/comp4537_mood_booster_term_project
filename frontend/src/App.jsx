@@ -4,8 +4,8 @@ import LoginPage from './components/LoginPage'
 import UserLandingPage from './components/UserLandingPage'
 import AdminLandingPage from './components/AdminLandingPage'
 
-// Configure axios base URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+// Configure axios base URL (only used for direct axios calls in this file)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://mood-booster-backend.onrender.com'
 axios.defaults.baseURL = API_BASE_URL
 
 function App() {

@@ -6,7 +6,14 @@ import axios from 'axios'
  */
 class ApiService {
   constructor(baseURL) {
+    // Vite environment variables are embedded at build time
+    // Make sure VITE_API_BASE_URL is set in Vercel before building
     this.baseURL = baseURL || import.meta.env.VITE_API_BASE_URL || 'https://mood-booster-backend.onrender.com'
+    
+    // Debug: Log the base URL being used (remove in production if desired)
+    console.log('API Base URL:', this.baseURL)
+    console.log('VITE_API_BASE_URL from env:', import.meta.env.VITE_API_BASE_URL)
+    
     this.setupAxios()
   }
 
