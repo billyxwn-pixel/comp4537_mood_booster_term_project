@@ -6,7 +6,7 @@ import axios from 'axios'
  */
 class ApiService {
   constructor(baseURL) {
-    this.baseURL = baseURL || 'https://mood-booster-backend.onrender.com'
+    this.baseURL = baseURL || import.meta.env.VITE_API_BASE_URL || 'https://mood-booster-backend.onrender.com'
     this.setupAxios()
   }
 

@@ -4,8 +4,8 @@ Team Number: [INSERT YOUR GROUP NUMBER HERE]
 
 Team Members:
 
-Your Name ([INSERT YOUR NAME HERE])
-Brief explanation: [INSERT WHY YOU WERE CHOSEN - e.g., "Experience with JavaScript, Node.js, React, and RESTful API development. Strong understanding of database design and Python for ML services. Good time management and dedication to completing projects on time."]
+Billy Wei
+Brief explanation: With experience using Ruby on Rails, MVCs, and frontend development using React.js, I ended doing everything on my own.
 
 Project Idea:
 
