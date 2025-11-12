@@ -6,22 +6,39 @@ import axios from 'axios'
  */
 class ApiService {
   constructor(baseURL) {
-    // Vite environment variables are embedded at build time
-    // Make sure VITE_API_BASE_URL is set in Vercel before building
+    // Priority order for baseURL:
+    // 1. Explicitly passed baseURL (for testing)
+    // 2. Runtime config from window (set in index.html or by Vercel)
+    // 3. Vite build-time environment variable
+    // 4. Fallback to default backend URL
+    
+    // Check for runtime config (useful for Vercel if env vars aren't working)
+    const runtimeConfig = typeof window !== 'undefined' && window.APP_CONFIG?.API_BASE_URL
+    
+    // Check Vite build-time env var
     const envURL = import.meta.env.VITE_API_BASE_URL
-    // Handle cases where env var might be undefined, empty string, or the string "undefined"
     const validEnvURL = envURL && envURL !== 'undefined' && envURL.trim() !== '' ? envURL : null
     
-    this.baseURL = baseURL || validEnvURL || 'https://mood-booster-backend.onrender.com'
+    // Determine the base URL with priority order
+    this.baseURL = baseURL || runtimeConfig || validEnvURL || 'https://mood-booster-backend.onrender.com'
     
     // Debug: Log the base URL being used (remove in production if desired)
+    console.log('=== API Configuration ===')
     console.log('API Base URL:', this.baseURL)
+    console.log('Runtime config:', runtimeConfig)
     console.log('VITE_API_BASE_URL from env:', import.meta.env.VITE_API_BASE_URL)
     console.log('Valid env URL:', validEnvURL)
+    console.log('========================')
     
     // Ensure baseURL doesn't end with a slash
     if (this.baseURL.endsWith('/')) {
       this.baseURL = this.baseURL.slice(0, -1)
+    }
+    
+    // Warn if using localhost in production
+    if (this.baseURL.includes('localhost') && window.location.hostname !== 'localhost') {
+      console.warn('⚠️ WARNING: Using localhost URL in production! This will not work.')
+      console.warn('Please set VITE_API_BASE_URL in Vercel environment variables.')
     }
     
     this.setupAxios()
