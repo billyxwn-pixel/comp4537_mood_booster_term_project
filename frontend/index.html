@@ -80,15 +80,13 @@
 </head>
 <body>
     <div id="root"></div>
-    <!-- Optional: Set API URL at runtime if Vite env vars aren't working -->
-    <!-- Uncomment and set your backend URL if needed -->
-    <!--
+    <!-- Set API URL at runtime (works even if Vite env vars aren't picked up during build) -->
     <script>
         window.APP_CONFIG = {
             API_BASE_URL: 'https://mood-booster-backend.onrender.com'
         };
+        console.log('Runtime config set:', window.APP_CONFIG);
     </script>
-    -->
     <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
