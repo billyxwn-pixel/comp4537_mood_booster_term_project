@@ -5,8 +5,12 @@ import UserLandingPage from './components/UserLandingPage'
 import AdminLandingPage from './components/AdminLandingPage'
 
 // Configure axios base URL (only used for direct axios calls in this file)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://mood-booster-backend.onrender.com'
+const envURL = import.meta.env.VITE_API_BASE_URL
+const validEnvURL = envURL && envURL !== 'undefined' && envURL.trim() !== '' ? envURL : null
+const API_BASE_URL = validEnvURL || 'https://mood-booster-backend.onrender.com'
 axios.defaults.baseURL = API_BASE_URL
+console.log('App.jsx - API_BASE_URL:', API_BASE_URL)
+console.log('App.jsx - VITE_API_BASE_URL from env:', import.meta.env.VITE_API_BASE_URL)
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)

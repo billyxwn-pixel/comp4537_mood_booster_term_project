@@ -8,11 +8,21 @@ class ApiService {
   constructor(baseURL) {
     // Vite environment variables are embedded at build time
     // Make sure VITE_API_BASE_URL is set in Vercel before building
-    this.baseURL = baseURL || import.meta.env.VITE_API_BASE_URL || 'https://mood-booster-backend.onrender.com'
+    const envURL = import.meta.env.VITE_API_BASE_URL
+    // Handle cases where env var might be undefined, empty string, or the string "undefined"
+    const validEnvURL = envURL && envURL !== 'undefined' && envURL.trim() !== '' ? envURL : null
+    
+    this.baseURL = baseURL || validEnvURL || 'https://mood-booster-backend.onrender.com'
     
     // Debug: Log the base URL being used (remove in production if desired)
     console.log('API Base URL:', this.baseURL)
     console.log('VITE_API_BASE_URL from env:', import.meta.env.VITE_API_BASE_URL)
+    console.log('Valid env URL:', validEnvURL)
+    
+    // Ensure baseURL doesn't end with a slash
+    if (this.baseURL.endsWith('/')) {
+      this.baseURL = this.baseURL.slice(0, -1)
+    }
     
     this.setupAxios()
   }
@@ -56,12 +66,15 @@ class ApiService {
    */
   async login(email, password) {
     try {
-      const response = await axios.post(`${this.baseURL}/api/auth/login`, {
+      const url = `${this.baseURL}/api/auth/login`
+      console.log('Login request URL:', url) // Debug log
+      const response = await axios.post(url, {
         email,
         password
       })
       return response.data
     } catch (error) {
+      console.error('Login error:', error) // Debug log
       return {
         success: false,
         error: error.response?.data?.error || 'Login failed'
