@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mood Booster Chatbot</title>
+    <!-- Set API URL at runtime BEFORE any modules load (works even if Vite env vars aren't picked up during build) -->
+    <script>
+        // This MUST run before any modules load
+        window.APP_CONFIG = {
+            API_BASE_URL: 'https://mood-booster-backend.onrender.com'
+        };
+        console.log('Runtime config set in HEAD:', window.APP_CONFIG);
+    </script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -80,13 +88,6 @@
 </head>
 <body>
     <div id="root"></div>
-    <!-- Set API URL at runtime (works even if Vite env vars aren't picked up during build) -->
-    <script>
-        window.APP_CONFIG = {
-            API_BASE_URL: 'https://mood-booster-backend.onrender.com'
-        };
-        console.log('Runtime config set:', window.APP_CONFIG);
-    </script>
     <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>

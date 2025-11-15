@@ -17,10 +17,27 @@ class ApiService {
     
     // Check Vite build-time env var
     const envURL = import.meta.env.VITE_API_BASE_URL
-    const validEnvURL = envURL && envURL !== 'undefined' && envURL.trim() !== '' ? envURL : null
+    // Filter out localhost URLs in production
+    const validEnvURL = envURL && 
+                       envURL !== 'undefined' && 
+                       envURL.trim() !== '' &&
+                       !(envURL.includes('localhost') && typeof window !== 'undefined' && window.location.hostname !== 'localhost')
+                       ? envURL : null
     
     // Determine the base URL with priority order
-    this.baseURL = baseURL || runtimeConfig || validEnvURL || 'https://mood-booster-backend.onrender.com'
+    let determinedURL = baseURL || runtimeConfig || validEnvURL || 'https://mood-booster-backend.onrender.com'
+    
+    // CRITICAL: Never use localhost in production (on Vercel)
+    const isProduction = typeof window !== 'undefined' && 
+                        window.location.hostname !== 'localhost' && 
+                        window.location.hostname !== '127.0.0.1'
+    
+    if (isProduction && determinedURL.includes('localhost')) {
+      console.error('🚨 ERROR: Attempted to use localhost in production! Overriding to production backend.')
+      determinedURL = 'https://mood-booster-backend.onrender.com'
+    }
+    
+    this.baseURL = determinedURL
     
     // Debug: Log the base URL being used (remove in production if desired)
     console.log('=== API Configuration ===')
@@ -28,17 +45,13 @@ class ApiService {
     console.log('Runtime config:', runtimeConfig)
     console.log('VITE_API_BASE_URL from env:', import.meta.env.VITE_API_BASE_URL)
     console.log('Valid env URL:', validEnvURL)
+    console.log('Is Production:', isProduction)
+    console.log('Window.APP_CONFIG:', typeof window !== 'undefined' ? window.APP_CONFIG : 'N/A')
     console.log('========================')
     
     // Ensure baseURL doesn't end with a slash
     if (this.baseURL.endsWith('/')) {
       this.baseURL = this.baseURL.slice(0, -1)
-    }
-    
-    // Warn if using localhost in production
-    if (this.baseURL.includes('localhost') && window.location.hostname !== 'localhost') {
-      console.warn('⚠️ WARNING: Using localhost URL in production! This will not work.')
-      console.warn('Please set VITE_API_BASE_URL in Vercel environment variables.')
     }
     
     this.setupAxios()
