@@ -6,47 +6,48 @@ import axios from 'axios'
  */
 class ApiService {
   constructor(baseURL) {
-    // Priority order for baseURL:
-    // 1. Explicitly passed baseURL (for testing)
-    // 2. Runtime config from window (set in index.html or by Vercel)
-    // 3. Vite build-time environment variable
-    // 4. Fallback to default backend URL
-    
-    // Check for runtime config (useful for Vercel if env vars aren't working)
-    const runtimeConfig = typeof window !== 'undefined' && window.APP_CONFIG?.API_BASE_URL
-    
-    // Check Vite build-time env var
-    const envURL = import.meta.env.VITE_API_BASE_URL
-    // Filter out localhost URLs in production
-    const validEnvURL = envURL && 
-                       envURL !== 'undefined' && 
-                       envURL.trim() !== '' &&
-                       !(envURL.includes('localhost') && typeof window !== 'undefined' && window.location.hostname !== 'localhost')
-                       ? envURL : null
-    
-    // Determine the base URL with priority order
-    let determinedURL = baseURL || runtimeConfig || validEnvURL || 'https://mood-booster-backend.onrender.com'
-    
-    // CRITICAL: Never use localhost in production (on Vercel)
+    // Detect if we're in production (not localhost)
     const isProduction = typeof window !== 'undefined' && 
                         window.location.hostname !== 'localhost' && 
                         window.location.hostname !== '127.0.0.1'
     
+    // Production backend URL
+    const PRODUCTION_BACKEND_URL = 'https://mood-booster-backend.onrender.com'
+    
+    // In production, ALWAYS use the production backend URL (unless explicitly overridden for testing)
+    if (isProduction && !baseURL) {
+      this.baseURL = PRODUCTION_BACKEND_URL
+      console.log('🚀 Production mode detected. Using production backend:', this.baseURL)
+      this.setupAxios()
+      return
+    }
+    
+    // For local development, use the normal priority order:
+    // 1. Explicitly passed baseURL (for testing)
+    // 2. Runtime config from window (set in index.html)
+    // 3. Vite build-time environment variable
+    // 4. Fallback to localhost for development
+    
+    const runtimeConfig = typeof window !== 'undefined' && window.APP_CONFIG?.API_BASE_URL
+    const envURL = import.meta.env.VITE_API_BASE_URL
+    const validEnvURL = envURL && envURL !== 'undefined' && envURL.trim() !== '' ? envURL : null
+    
+    let determinedURL = baseURL || runtimeConfig || validEnvURL || 'http://localhost:3000'
+    
+    // Safety check: Never use localhost in production
     if (isProduction && determinedURL.includes('localhost')) {
-      console.error('🚨 ERROR: Attempted to use localhost in production! Overriding to production backend.')
-      determinedURL = 'https://mood-booster-backend.onrender.com'
+      console.error('🚨 ERROR: Attempted to use localhost in production! Forcing production backend.')
+      determinedURL = PRODUCTION_BACKEND_URL
     }
     
     this.baseURL = determinedURL
     
-    // Debug: Log the base URL being used (remove in production if desired)
+    // Debug: Log the base URL being used
     console.log('=== API Configuration ===')
     console.log('API Base URL:', this.baseURL)
+    console.log('Is Production:', isProduction)
     console.log('Runtime config:', runtimeConfig)
     console.log('VITE_API_BASE_URL from env:', import.meta.env.VITE_API_BASE_URL)
-    console.log('Valid env URL:', validEnvURL)
-    console.log('Is Production:', isProduction)
-    console.log('Window.APP_CONFIG:', typeof window !== 'undefined' ? window.APP_CONFIG : 'N/A')
     console.log('========================')
     
     // Ensure baseURL doesn't end with a slash
