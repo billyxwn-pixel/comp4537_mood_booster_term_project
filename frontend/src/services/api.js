@@ -1,106 +1,87 @@
-import axios from 'axios'
-
-// Force console log to verify this file is loaded
-console.log('📦 api.js module loaded at:', new Date().toISOString())
+import axios from "axios";
 
 /**
- * API Service class
- * Handles all API calls to the backend
+ * Resolve the correct API base URL at runtime.
  */
-class ApiService {
-  constructor(baseURL) {
-    // Production backend URL
-    this.PRODUCTION_BACKEND_URL = 'https://mood-booster-backend.onrender.com'
-    
-    // Store the passed baseURL for potential use
-    this._passedBaseURL = baseURL
-    
-    // Initialize baseURL (will be set properly in getBaseURL)
-    this._baseURL = null
-    
-    this.setupAxios()
-    
-    // Log initialization
-    console.log('🔧 ApiService initialized')
-    console.log('Initial baseURL will be determined on first use')
-  }
-  
-  // Getter that ensures correct baseURL at runtime
-  getBaseURL() {
-    // Detect if we're in production (not localhost) - check at runtime
-    const isProduction = typeof window !== 'undefined' && 
-                        window.location.hostname !== 'localhost' && 
-                        window.location.hostname !== '127.0.0.1'
-    
-    // If we already have a valid baseURL and we're in production, ensure it's not localhost
-    if (this._baseURL && isProduction && !this._baseURL.includes('localhost')) {
-      return this._baseURL
-    }
-    
-    // In production, ALWAYS use the production backend URL
-    if (isProduction) {
-      this._baseURL = this.PRODUCTION_BACKEND_URL
-      console.log('🚀 Production mode - Using:', this._baseURL)
-      return this._baseURL
-    }
-    
-    // For local development
-    if (this._passedBaseURL) {
-      this._baseURL = this._passedBaseURL
-    } else {
-      const runtimeConfig = typeof window !== 'undefined' && window.APP_CONFIG?.API_BASE_URL
-      const envURL = import.meta.env.VITE_API_BASE_URL
-      const validEnvURL = envURL && envURL !== 'undefined' && envURL.trim() !== '' ? envURL : null
-      this._baseURL = runtimeConfig || validEnvURL || 'http://localhost:3000'
-    }
-    
-    // Ensure baseURL doesn't end with a slash
-    if (this._baseURL.endsWith('/')) {
-      this._baseURL = this._baseURL.slice(0, -1)
-    }
-    
-    return this._baseURL
-  }
-  
-  get baseURL() {
-    return this.getBaseURL()
-  }
-  
-  set baseURL(value) {
-    this._baseURL = value
+function resolveBaseURL() {
+  const hostname =
+    typeof window !== "undefined" ? window.location.hostname : "";
+
+  const isLocalhost =
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "";
+
+  const isVercel = hostname.includes("vercel.app");
+
+  // 1. Prefer explicit environment variable
+  const envURL = import.meta.env.VITE_API_BASE_URL;
+  const hasEnvURL =
+    typeof envURL === "string" &&
+    envURL !== "undefined" &&
+    envURL.trim() !== "";
+
+  if (hasEnvURL) {
+    console.log("[Api] Using VITE_API_BASE_URL:", envURL);
+    return envURL.replace(/\/+$/, "");
   }
 
-  setupAxios() {
-    // Add token to requests if available
-    axios.interceptors.request.use(
-      (config) => {
-        const token = localStorage.getItem('token')
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`
-        }
-        return config
-      },
-      (error) => {
-        return Promise.reject(error)
+  // 2. If running on Vercel or any non localhost host, use production backend
+  const PRODUCTION_BACKEND_URL = "https://mood-booster-backend.onrender.com";
+
+  if (!isLocalhost || isVercel) {
+    console.log(
+      "[Api] No env URL. Non localhost host detected. Using production backend:",
+      PRODUCTION_BACKEND_URL
+    );
+    return PRODUCTION_BACKEND_URL;
+  }
+
+  // 3. Fallback for local development only
+  const localURL = "http://localhost:3000";
+  console.log("[Api] Local development detected. Using:", localURL);
+  return localURL;
+}
+
+const BASE_URL = resolveBaseURL();
+
+/**
+ * Axios instance configured for the backend API.
+ */
+const apiClient = axios.create({
+  baseURL: BASE_URL,
+});
+
+// Attach auth token if present
+apiClient.interceptors.request.use(
+  (config) => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
       }
-    )
-  }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
+class ApiService {
   /**
    * Register a new user
    */
   async register(email, password) {
     try {
-      const response = await axios.post(`${this.baseURL}/api/auth/register`, {
+      const response = await apiClient.post("/api/auth/register", {
         email,
-        password
-      })
-      return response.data
+        password,
+      });
+      return response.data;
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.error || 'Registration failed'
-      }
+        error: error.response?.data?.error || "Registration failed",
+      };
     }
   }
 
@@ -109,37 +90,19 @@ class ApiService {
    */
   async login(email, password) {
     try {
-      // Runtime check: Force production URL if we're on Vercel
-      let url = `${this.baseURL}/api/auth/login`
-      const isProduction = typeof window !== 'undefined' && 
-                          window.location.hostname !== 'localhost' && 
-                          window.location.hostname !== '127.0.0.1'
-      
-      if (isProduction && url.includes('localhost')) {
-        console.error('🚨 CRITICAL: Detected localhost in production! Overriding URL.')
-        url = 'https://mood-booster-backend.onrender.com/api/auth/login'
-        this.baseURL = 'https://mood-booster-backend.onrender.com'
-      }
-      
-      console.log('=== LOGIN REQUEST ===')
-      console.log('Current hostname:', typeof window !== 'undefined' ? window.location.hostname : 'N/A')
-      console.log('Is Production:', isProduction)
-      console.log('this.baseURL:', this.baseURL)
-      console.log('Login request URL:', url)
-      console.log('====================')
-      
-      const response = await axios.post(url, {
+      console.log("[Api] Login using baseURL:", BASE_URL);
+      const response = await apiClient.post("/api/auth/login", {
         email,
-        password
-      })
-      return response.data
+        password,
+      });
+      return response.data;
     } catch (error) {
-      console.error('Login error:', error)
-      console.error('Error URL:', error.config?.url)
+      console.error("[Api] Login error:", error?.message);
+      console.error("[Api] Request URL:", error.config?.baseURL, error.config?.url);
       return {
         success: false,
-        error: error.response?.data?.error || 'Login failed'
-      }
+        error: error.response?.data?.error || "Login failed",
+      };
     }
   }
 
@@ -148,13 +111,13 @@ class ApiService {
    */
   async getUserProfile() {
     try {
-      const response = await axios.get(`${this.baseURL}/api/user/profile`)
-      return response.data
+      const response = await apiClient.get("/api/user/profile");
+      return response.data;
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.error || 'Failed to get profile'
-      }
+        error: error.response?.data?.error || "Failed to get profile",
+      };
     }
   }
 
@@ -163,15 +126,15 @@ class ApiService {
    */
   async sendMessage(message) {
     try {
-      const response = await axios.post(`${this.baseURL}/api/chat/send`, {
-        message
-      })
-      return response.data
+      const response = await apiClient.post("/api/chat/send", {
+        message,
+      });
+      return response.data;
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.error || 'Failed to send message'
-      }
+        error: error.response?.data?.error || "Failed to send message",
+      };
     }
   }
 
@@ -180,13 +143,13 @@ class ApiService {
    */
   async getChatHistory() {
     try {
-      const response = await axios.get(`${this.baseURL}/api/chat/history`)
-      return response.data
+      const response = await apiClient.get("/api/chat/history");
+      return response.data;
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.error || 'Failed to get chat history'
-      }
+        error: error.response?.data?.error || "Failed to get chat history",
+      };
     }
   }
 
@@ -195,13 +158,13 @@ class ApiService {
    */
   async getAllUsers() {
     try {
-      const response = await axios.get(`${this.baseURL}/api/admin/users`)
-      return response.data
+      const response = await apiClient.get("/api/admin/users");
+      return response.data;
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.error || 'Failed to get users'
-      }
+        error: error.response?.data?.error || "Failed to get users",
+      };
     }
   }
 
@@ -210,13 +173,15 @@ class ApiService {
    */
   async getUserChatHistory(userId) {
     try {
-      const response = await axios.get(`${this.baseURL}/api/admin/chat-history/${userId}`)
-      return response.data
+      const response = await apiClient.get(
+        `/api/admin/chat-history/${encodeURIComponent(userId)}`
+      );
+      return response.data;
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.error || 'Failed to get chat history'
-      }
+        error: error.response?.data?.error || "Failed to get chat history",
+      };
     }
   }
 
@@ -225,15 +190,17 @@ class ApiService {
    */
   async deleteUser(userId) {
     try {
-      const response = await axios.delete(`${this.baseURL}/api/admin/users/${userId}`)
-      return response.data
+      const response = await apiClient.delete(
+        `/api/admin/users/${encodeURIComponent(userId)}`
+      );
+      return response.data;
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.error || 'Failed to delete user'
-      }
+        error: error.response?.data?.error || "Failed to delete user",
+      };
     }
   }
 }
 
-export default new ApiService()
+export default new ApiService();
