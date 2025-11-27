@@ -24,9 +24,9 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Model configuration
 # Using a smaller, faster model for mood boosting conversations
 # You can change this to any model from HuggingFace
-MODEL_NAME = "distilgpt2"  # Start with GPT-2 small (smaller file size)
+MODEL_NAME = "sshleifer/tiny-gpt2"  # Start with GPT-2 small (smaller file size)
 # Alternative options:
-# MODEL_NAME = "distilgpt2"  # Even smaller
+# MODEL_NAME = "sshleifer/tiny-gpt2"  # Even smaller
 # MODEL_NAME = "microsoft/DialoGPT-small"  # Dialogue-focused
 # MODEL_NAME = "facebook/blenderbot_small-90M"  # Conversational
 
