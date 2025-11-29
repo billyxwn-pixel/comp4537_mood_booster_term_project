@@ -105,13 +105,7 @@ function LoginPage({ onLogin }) {
           </button>
         </div>
 
-        <div className="mt-4 p-3 bg-light rounded">
-          <small className="text-muted">
-            <strong>Test Credentials:</strong><br />
-            Admin: billy@billy.com / 1234<br />
-            User: hello@hello.com / 222
-          </small>
-        </div>
+       
       </div>
     </div>
   )
