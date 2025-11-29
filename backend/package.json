@@ -15,7 +15,9 @@
     "bcryptjs": "^2.4.3",
     "sqlite3": "^5.1.6",
     "axios": "^1.6.0",
-    "express-rate-limit": "^7.1.5"
+    "express-rate-limit": "^7.1.5",
+    "swagger-ui-express": "^5.0.0",
+    "swagger-jsdoc": "^6.2.8"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
