@@ -127,8 +127,8 @@ class Database {
      */
     async initializeAdminUser() {
         return new Promise((resolve, reject) => {
-            const adminEmail = 'billy@billy.com';
-            const adminPassword = '1234';
+            const adminEmail = 'admin@admin.com';
+            const adminPassword = '111';
             
             // Check if admin exists
             this.db.get('SELECT id FROM users WHERE email = ?', [adminEmail], async (err, row) => {

@@ -45,7 +45,13 @@ const options = {
             }
         ]
     },
-    apis: ['./routes/*.js', './server.js']
+    apis: [
+        './routes/AuthRoutes.js',
+        './routes/UserRoutes.js',
+        './routes/ChatRoutes.js',
+        './routes/AdminRoutes.js',
+        './server.js'
+    ]
 };
 
 const swaggerSpec = swaggerJsdoc(options);

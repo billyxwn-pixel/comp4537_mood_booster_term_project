@@ -16,6 +16,47 @@ class ChatRoutes {
     }
 
     setupRoutes() {
+        /**
+         * @swagger
+         * /api/v1/chat/send:
+         *   post:
+         *     summary: Send a chat message
+         *     tags: [Chat]
+         *     security:
+         *       - bearerAuth: []
+         *     requestBody:
+         *       required: true
+         *       content:
+         *         application/json:
+         *           schema:
+         *             type: object
+         *             required:
+         *               - message
+         *             properties:
+         *               message:
+         *                 type: string
+         *                 example: "How are you today?"
+         *     responses:
+         *       200:
+         *         description: Message sent successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 success:
+         *                   type: boolean
+         *                 response:
+         *                   type: string
+         *                 apiCallsUsed:
+         *                   type: integer
+         *                 apiCallsRemaining:
+         *                   type: integer
+         *       400:
+         *         description: Message is required
+         *       401:
+         *         description: Unauthorized
+         */
         // Send message endpoint (requires authentication)
         this.router.post('/send', this.authMiddleware.verifyToken(), async (req, res) => {
             try {
@@ -54,6 +95,40 @@ class ChatRoutes {
             }
         });
 
+        /**
+         * @swagger
+         * /api/v1/chat/history:
+         *   get:
+         *     summary: Get user chat history
+         *     tags: [Chat]
+         *     security:
+         *       - bearerAuth: []
+         *     responses:
+         *       200:
+         *         description: Chat history retrieved successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 success:
+         *                   type: boolean
+         *                 history:
+         *                   type: array
+         *                   items:
+         *                     type: object
+         *                     properties:
+         *                       id:
+         *                         type: integer
+         *                       user_message:
+         *                         type: string
+         *                       bot_response:
+         *                         type: string
+         *                       created_at:
+         *                         type: string
+         *       401:
+         *         description: Unauthorized
+         */
         // Get chat history endpoint (requires authentication)
         this.router.get('/history', this.authMiddleware.verifyToken(), async (req, res) => {
             try {

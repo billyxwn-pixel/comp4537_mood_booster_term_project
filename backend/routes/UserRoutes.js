@@ -16,6 +16,42 @@ class UserRoutes {
     }
 
     setupRoutes() {
+        /**
+         * @swagger
+         * /api/v1/user/profile:
+         *   get:
+         *     summary: Get user profile
+         *     tags: [User]
+         *     security:
+         *       - bearerAuth: []
+         *     responses:
+         *       200:
+         *         description: User profile retrieved successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 success:
+         *                   type: boolean
+         *                 user:
+         *                   type: object
+         *                   properties:
+         *                     id:
+         *                       type: integer
+         *                     email:
+         *                       type: string
+         *                     is_admin:
+         *                       type: boolean
+         *                     api_calls_used:
+         *                       type: integer
+         *                     api_calls_remaining:
+         *                       type: integer
+         *       401:
+         *         description: Unauthorized
+         *       404:
+         *         description: User not found
+         */
         // Get user profile (requires authentication)
         this.router.get('/profile', this.authMiddleware.verifyToken(), async (req, res) => {
             try {
@@ -54,6 +90,38 @@ class UserRoutes {
             }
         });
 
+        /**
+         * @swagger
+         * /api/v1/user/endpoint-usage:
+         *   get:
+         *     summary: Get user endpoint usage statistics
+         *     tags: [User]
+         *     security:
+         *       - bearerAuth: []
+         *     responses:
+         *       200:
+         *         description: Endpoint usage retrieved successfully
+         *         content:
+         *           application/json:
+         *             schema:
+         *               type: object
+         *               properties:
+         *                 success:
+         *                   type: boolean
+         *                 endpointUsage:
+         *                   type: array
+         *                   items:
+         *                     type: object
+         *                     properties:
+         *                       method:
+         *                         type: string
+         *                       endpoint:
+         *                         type: string
+         *                       request_count:
+         *                         type: integer
+         *       401:
+         *         description: Unauthorized
+         */
         // Get user endpoint usage (requires authentication)
         this.router.get('/endpoint-usage', this.authMiddleware.verifyToken(), async (req, res) => {
             try {
@@ -79,6 +147,35 @@ class UserRoutes {
             }
         });
 
+        /**
+         * @swagger
+         * /api/v1/user/profile:
+         *   put:
+         *     summary: Update user profile
+         *     tags: [User]
+         *     security:
+         *       - bearerAuth: []
+         *     requestBody:
+         *       required: false
+         *       content:
+         *         application/json:
+         *           schema:
+         *             type: object
+         *             properties:
+         *               email:
+         *                 type: string
+         *                 format: email
+         *                 example: newemail@example.com
+         *     responses:
+         *       200:
+         *         description: Profile updated successfully
+         *       400:
+         *         description: Invalid email format
+         *       401:
+         *         description: Unauthorized
+         *       409:
+         *         description: Email already exists
+         */
         // Update user profile (PUT method - requires authentication)
         this.router.put('/profile', this.authMiddleware.verifyToken(), async (req, res) => {
             try {
