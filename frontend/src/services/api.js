@@ -1,3 +1,10 @@
+/**
+ * API Service
+ * Handles all API calls to the backend
+ * 
+ * Note: ChatGPT was used for syntax correction and debugging
+ */
+
 import axios from "axios";
 
 /**
@@ -72,7 +79,7 @@ class ApiService {
    */
   async register(email, password) {
     try {
-      const response = await apiClient.post("/api/auth/register", {
+      const response = await apiClient.post("/api/v1/auth/register", {
         email,
         password,
       });
@@ -91,7 +98,7 @@ class ApiService {
   async login(email, password) {
     try {
       console.log("[Api] Login using baseURL:", BASE_URL);
-      const response = await apiClient.post("/api/auth/login", {
+      const response = await apiClient.post("/api/v1/auth/login", {
         email,
         password,
       });
@@ -111,7 +118,7 @@ class ApiService {
    */
   async getUserProfile() {
     try {
-      const response = await apiClient.get("/api/user/profile");
+      const response = await apiClient.get("/api/v1/user/profile");
       return response.data;
     } catch (error) {
       return {
@@ -122,11 +129,28 @@ class ApiService {
   }
 
   /**
+   * Update user profile
+   */
+  async updateProfile(email) {
+    try {
+      const response = await apiClient.put("/api/v1/user/profile", {
+        email,
+      });
+      return response.data;
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || "Failed to update profile",
+      };
+    }
+  }
+
+  /**
    * Send chat message
    */
   async sendMessage(message) {
     try {
-      const response = await apiClient.post("/api/chat/send", {
+      const response = await apiClient.post("/api/v1/chat/send", {
         message,
       });
       return response.data;
@@ -143,7 +167,7 @@ class ApiService {
    */
   async getChatHistory() {
     try {
-      const response = await apiClient.get("/api/chat/history");
+      const response = await apiClient.get("/api/v1/chat/history");
       return response.data;
     } catch (error) {
       return {
@@ -158,7 +182,7 @@ class ApiService {
    */
   async getAllUsers() {
     try {
-      const response = await apiClient.get("/api/admin/users");
+      const response = await apiClient.get("/api/v1/admin/users");
       return response.data;
     } catch (error) {
       return {
@@ -169,12 +193,57 @@ class ApiService {
   }
 
   /**
+   * Get endpoint usage statistics (admin only)
+   */
+  async getEndpointStats() {
+    try {
+      const response = await apiClient.get("/api/v1/admin/stats/endpoints");
+      return response.data;
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || "Failed to get endpoint stats",
+      };
+    }
+  }
+
+  /**
+   * Get user API consumption statistics (admin only)
+   */
+  async getUserStats() {
+    try {
+      const response = await apiClient.get("/api/v1/admin/stats/users");
+      return response.data;
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || "Failed to get user stats",
+      };
+    }
+  }
+
+  /**
+   * Get user endpoint usage (for regular users)
+   */
+  async getUserEndpointUsage() {
+    try {
+      const response = await apiClient.get("/api/v1/user/endpoint-usage");
+      return response.data;
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || "Failed to get endpoint usage",
+      };
+    }
+  }
+
+  /**
    * Get chat history for a specific user (admin only)
    */
   async getUserChatHistory(userId) {
     try {
       const response = await apiClient.get(
-        `/api/admin/chat-history/${encodeURIComponent(userId)}`
+        `/api/v1/admin/chat-history/${encodeURIComponent(userId)}`
       );
       return response.data;
     } catch (error) {
@@ -191,7 +260,7 @@ class ApiService {
   async deleteUser(userId) {
     try {
       const response = await apiClient.delete(
-        `/api/admin/users/${encodeURIComponent(userId)}`
+        `/api/v1/admin/users/${encodeURIComponent(userId)}`
       );
       return response.data;
     } catch (error) {

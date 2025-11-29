@@ -5,6 +5,8 @@ const bcrypt = require('bcryptjs');
 /**
  * Database class to handle all database operations
  * Implements OOP principles with singleton pattern
+ * 
+ * Note: ChatGPT was used for syntax correction and debugging
  */
 class Database {
     constructor(dbPath = './database.db') {
@@ -61,9 +63,31 @@ class Database {
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
                 )`,
+                // API endpoint usage stats table (separate entity for proper DB design)
+                `CREATE TABLE IF NOT EXISTS endpoint_stats (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    method TEXT NOT NULL,
+                    endpoint TEXT NOT NULL,
+                    request_count INTEGER DEFAULT 0,
+                    last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(method, endpoint)
+                )`,
+                // User API consumption per endpoint (for user breakdown)
+                `CREATE TABLE IF NOT EXISTS user_endpoint_usage (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    method TEXT NOT NULL,
+                    endpoint TEXT NOT NULL,
+                    request_count INTEGER DEFAULT 0,
+                    last_used DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    UNIQUE(user_id, method, endpoint)
+                )`,
                 // Create index for faster lookups
                 `CREATE INDEX IF NOT EXISTS idx_user_id ON chat_history(user_id)`,
-                `CREATE INDEX IF NOT EXISTS idx_email ON users(email)`
+                `CREATE INDEX IF NOT EXISTS idx_email ON users(email)`,
+                `CREATE INDEX IF NOT EXISTS idx_endpoint_stats ON endpoint_stats(method, endpoint)`,
+                `CREATE INDEX IF NOT EXISTS idx_user_endpoint_usage ON user_endpoint_usage(user_id)`
             ];
 
             // Execute queries sequentially to ensure proper order
@@ -236,18 +260,92 @@ class Database {
     }
 
     /**
-     * Increment API calls for a user
+     * Increment API calls for a user and track endpoint usage
      */
-    async incrementApiCalls(userId) {
+    async incrementApiCalls(userId, method, endpoint) {
         return new Promise((resolve, reject) => {
+            // Track endpoint stats (global) - always track
             this.db.run(
-                'UPDATE users SET api_calls_used = api_calls_used + 1 WHERE id = ?',
-                [userId],
+                `INSERT INTO endpoint_stats (method, endpoint, request_count, last_updated)
+                 VALUES (?, ?, 1, CURRENT_TIMESTAMP)
+                 ON CONFLICT(method, endpoint) DO UPDATE SET
+                 request_count = request_count + 1,
+                 last_updated = CURRENT_TIMESTAMP`,
+                [method, endpoint],
                 (err) => {
+                    if (err) {
+                        console.error('Error tracking endpoint stats:', err);
+                    }
+                }
+            );
+            
+            // Only track user-specific stats if userId is provided
+            if (userId) {
+                // Increment user's total API calls
+                this.db.run(
+                    'UPDATE users SET api_calls_used = api_calls_used + 1 WHERE id = ?',
+                    [userId],
+                    (err) => {
+                        if (err) {
+                            console.error('Error incrementing user API calls:', err);
+                        }
+                    }
+                );
+                
+                // Track user-specific endpoint usage
+                this.db.run(
+                    `INSERT INTO user_endpoint_usage (user_id, method, endpoint, request_count, last_used)
+                     VALUES (?, ?, ?, 1, CURRENT_TIMESTAMP)
+                     ON CONFLICT(user_id, method, endpoint) DO UPDATE SET
+                     request_count = request_count + 1,
+                     last_used = CURRENT_TIMESTAMP`,
+                    [userId, method, endpoint],
+                    (err) => {
+                        if (err) {
+                            console.error('Error tracking user endpoint usage:', err);
+                        }
+                        resolve();
+                    }
+                );
+            } else {
+                // No userId, just resolve
+                resolve();
+            }
+        });
+    }
+
+    /**
+     * Get endpoint usage statistics
+     */
+    async getEndpointStats() {
+        return new Promise((resolve, reject) => {
+            this.db.all(
+                'SELECT method, endpoint, request_count FROM endpoint_stats ORDER BY request_count DESC',
+                [],
+                (err, rows) => {
                     if (err) {
                         reject(err);
                     } else {
-                        resolve();
+                        resolve(rows || []);
+                    }
+                }
+            );
+        });
+    }
+
+    /**
+     * Get user endpoint usage statistics
+     */
+    async getUserEndpointUsage(userId) {
+        return new Promise((resolve, reject) => {
+            this.db.all(
+                'SELECT method, endpoint, request_count FROM user_endpoint_usage WHERE user_id = ? ORDER BY request_count DESC',
+                [userId],
+                (err, rows) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(rows || []);
                     }
                 }
             );
@@ -305,6 +403,25 @@ class Database {
                         reject(err);
                     } else {
                         resolve(rows || []);
+                    }
+                }
+            );
+        });
+    }
+
+    /**
+     * Update user email
+     */
+    async updateUserEmail(userId, email) {
+        return new Promise((resolve, reject) => {
+            this.db.run(
+                'UPDATE users SET email = ? WHERE id = ?',
+                [email, userId],
+                function(err) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve();
                     }
                 }
             );

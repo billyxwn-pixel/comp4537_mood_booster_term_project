@@ -1,19 +1,27 @@
-import React, { useState, useEffect } from 'react'
-import ApiService from '../services/api'
-
 /**
  * Admin Landing Page Component
  * Admin interface for viewing users and chat history
+ * 
+ * Note: ChatGPT was used for syntax correction and debugging
  */
+
+import React, { useState, useEffect } from 'react'
+import ApiService from '../services/api'
+
 function AdminLandingPage({ user, token, onLogout }) {
   const [users, setUsers] = useState([])
   const [selectedUser, setSelectedUser] = useState(null)
   const [chatHistory, setChatHistory] = useState([])
+  const [endpointStats, setEndpointStats] = useState([])
+  const [userStats, setUserStats] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [activeTab, setActiveTab] = useState('stats') // 'stats' or 'users'
 
   useEffect(() => {
     loadUsers()
+    loadEndpointStats()
+    loadUserStats()
   }, [])
 
   const loadUsers = async () => {
@@ -53,6 +61,42 @@ function AdminLandingPage({ user, token, onLogout }) {
     }
   }
 
+  const loadEndpointStats = async () => {
+    setLoading(true)
+    setError('')
+    
+    try {
+      const result = await ApiService.getEndpointStats()
+      if (result.success) {
+        setEndpointStats(result.stats || [])
+      } else {
+        setError(result.error || 'Failed to load endpoint stats')
+      }
+    } catch (err) {
+      setError('An error occurred while loading endpoint stats')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadUserStats = async () => {
+    setLoading(true)
+    setError('')
+    
+    try {
+      const result = await ApiService.getUserStats()
+      if (result.success) {
+        setUserStats(result.users || [])
+      } else {
+        setError(result.error || 'Failed to load user stats')
+      }
+    } catch (err) {
+      setError('An error occurred while loading user stats')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleDeleteUser = async (userId) => {
     if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       return
@@ -65,6 +109,7 @@ function AdminLandingPage({ user, token, onLogout }) {
       const result = await ApiService.deleteUser(userId)
       if (result.success) {
         await loadUsers()
+        await loadUserStats()
         if (selectedUser === userId) {
           setSelectedUser(null)
           setChatHistory([])
@@ -99,6 +144,103 @@ function AdminLandingPage({ user, token, onLogout }) {
           </div>
         )}
 
+        {/* Tabs for Stats and Users */}
+        <ul className="nav nav-tabs mb-4" role="tablist">
+          <li className="nav-item">
+            <button
+              className={`nav-link ${activeTab === 'stats' ? 'active' : ''}`}
+              onClick={() => setActiveTab('stats')}
+            >
+              API Statistics
+            </button>
+          </li>
+          <li className="nav-item">
+            <button
+              className={`nav-link ${activeTab === 'users' ? 'active' : ''}`}
+              onClick={() => setActiveTab('users')}
+            >
+              User Management
+            </button>
+          </li>
+        </ul>
+
+        {activeTab === 'stats' && (
+          <div className="row">
+            {/* Table 1: Endpoint Usage Statistics */}
+            <div className="col-12 mb-4">
+              <h4>Endpoint Usage Statistics</h4>
+              <p className="text-muted">Stats for each endpoint (how many times each endpoint served requests)</p>
+              <div className="table-responsive">
+                <table className="table table-striped table-bordered">
+                  <thead className="table-dark">
+                    <tr>
+                      <th>Method</th>
+                      <th>Endpoint</th>
+                      <th>Requests</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading && endpointStats.length === 0 ? (
+                      <tr>
+                        <td colSpan="3" className="text-center">Loading...</td>
+                      </tr>
+                    ) : endpointStats.length === 0 ? (
+                      <tr>
+                        <td colSpan="3" className="text-center">No endpoint stats available</td>
+                      </tr>
+                    ) : (
+                      endpointStats.map((stat, index) => (
+                        <tr key={index}>
+                          <td>{stat.method}</td>
+                          <td>{stat.endpoint}</td>
+                          <td>{stat.request_count}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Table 2: User API Consumption */}
+            <div className="col-12">
+              <h4>User API Consumption Statistics</h4>
+              <p className="text-muted">Breakdown of API usages/consumption stats for each user</p>
+              <div className="table-responsive">
+                <table className="table table-striped table-bordered">
+                  <thead className="table-dark">
+                    <tr>
+                      <th>User ID</th>
+                      <th>Email</th>
+                      <th>Total Requests</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading && userStats.length === 0 ? (
+                      <tr>
+                        <td colSpan="3" className="text-center">Loading...</td>
+                      </tr>
+                    ) : userStats.length === 0 ? (
+                      <tr>
+                        <td colSpan="3" className="text-center">No user stats available</td>
+                      </tr>
+                    ) : (
+                      userStats.map((userStat) => (
+                        <tr key={userStat.id}>
+                          <td>{userStat.id}</td>
+                          <td>{userStat.email}</td>
+                          <td>{userStat.total_requests}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'users' && (
         <div className="row">
           <div className="col-md-6">
             <h4>All Users</h4>
@@ -192,6 +334,7 @@ function AdminLandingPage({ user, token, onLogout }) {
             )}
           </div>
         </div>
+        )}
       </div>
     </div>
   )

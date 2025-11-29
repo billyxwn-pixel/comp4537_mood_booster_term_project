@@ -12,6 +12,8 @@ const AdminRoutes = require('./routes/AdminRoutes');
 
 /**
  * Main Server Application
+ * 
+ * Note: ChatGPT was used for syntax correction and debugging
  */
 class Server {
     constructor() {
@@ -86,17 +88,32 @@ class Server {
      * Setup API routes
      */
     setupRoutes() {
+        // Swagger API documentation
+        const { swaggerSpec, swaggerUi } = require('./config/swagger');
+        this.app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+        this.app.get('/doc.json', (req, res) => {
+            res.setHeader('Content-Type', 'application/json');
+            res.send(swaggerSpec);
+        });
+
         // Health check endpoint
         this.app.get('/api/health', (req, res) => {
             res.json({ status: 'ok', timestamp: new Date().toISOString() });
         });
 
         // API routes
-        const authRoutes = new AuthRoutes(this.authService);
-        const chatRoutes = new ChatRoutes(this.chatService, this.authMiddleware);
+        const authRoutes = new AuthRoutes(this.authService, this.database);
+        const chatRoutes = new ChatRoutes(this.chatService, this.authMiddleware, this.database);
         const userRoutes = new UserRoutes(this.database, this.authMiddleware);
         const adminRoutes = new AdminRoutes(this.database, this.authMiddleware);
 
+        // API versioning - all routes under /api/v1
+        this.app.use('/api/v1/auth', authRoutes.getRouter());
+        this.app.use('/api/v1/chat', chatRoutes.getRouter());
+        this.app.use('/api/v1/user', userRoutes.getRouter());
+        this.app.use('/api/v1/admin', adminRoutes.getRouter());
+        
+        // Legacy routes for backward compatibility (redirect to v1)
         this.app.use('/api/auth', authRoutes.getRouter());
         this.app.use('/api/chat', chatRoutes.getRouter());
         this.app.use('/api/user', userRoutes.getRouter());

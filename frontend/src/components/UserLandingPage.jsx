@@ -1,16 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react'
-import ApiService from '../services/api'
-
 /**
  * User Landing Page Component
  * Main chat interface for regular users
+ * 
+ * Note: ChatGPT was used for syntax correction and debugging
  */
+
+import React, { useState, useEffect, useRef } from 'react'
+import ApiService from '../services/api'
+
 function UserLandingPage({ user, token, onLogout }) {
   const [messages, setMessages] = useState([])
   const [inputMessage, setInputMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [userProfile, setUserProfile] = useState(user)
   const [hasExceededLimit, setHasExceededLimit] = useState(false)
+  const [endpointUsage, setEndpointUsage] = useState([])
+  const [showApiStats, setShowApiStats] = useState(false)
   const messagesEndRef = useRef(null)
 
   useEffect(() => {
@@ -18,6 +23,8 @@ function UserLandingPage({ user, token, onLogout }) {
     loadUserProfile()
     // Load chat history
     loadChatHistory()
+    // Load endpoint usage
+    loadEndpointUsage()
   }, [])
 
   useEffect(() => {
@@ -34,6 +41,13 @@ function UserLandingPage({ user, token, onLogout }) {
     if (result.success) {
       setUserProfile(result.user)
       setHasExceededLimit(result.user.api_calls_used >= 20)
+    }
+  }
+
+  const loadEndpointUsage = async () => {
+    const result = await ApiService.getUserEndpointUsage()
+    if (result.success) {
+      setEndpointUsage(result.endpointUsage || [])
     }
   }
 
@@ -121,9 +135,49 @@ function UserLandingPage({ user, token, onLogout }) {
         </div>
 
         <div className="api-info">
-          <strong>API Calls:</strong> {userProfile?.api_calls_used || 0} / 20 used
-          {apiCallsRemaining > 0 && (
-            <span className="text-success"> ({apiCallsRemaining} remaining)</span>
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <strong>API Calls:</strong> {userProfile?.api_calls_used || 0} / 20 used
+              {apiCallsRemaining > 0 && (
+                <span className="text-success"> ({apiCallsRemaining} remaining)</span>
+              )}
+            </div>
+            <button
+              className="btn btn-sm btn-outline-info"
+              onClick={() => setShowApiStats(!showApiStats)}
+            >
+              {showApiStats ? 'Hide' : 'Show'} API Breakdown
+            </button>
+          </div>
+          
+          {showApiStats && (
+            <div className="mt-3">
+              <h6>API Consumption by Endpoint:</h6>
+              {endpointUsage.length === 0 ? (
+                <p className="text-muted">No API usage data available</p>
+              ) : (
+                <div className="table-responsive">
+                  <table className="table table-sm table-bordered">
+                    <thead>
+                      <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Requests</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {endpointUsage.map((usage, index) => (
+                        <tr key={index}>
+                          <td>{usage.method}</td>
+                          <td>{usage.endpoint}</td>
+                          <td>{usage.request_count}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           )}
         </div>
 

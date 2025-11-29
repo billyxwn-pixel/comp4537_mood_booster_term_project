@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 /**
  * Authentication Service
  * Handles user registration, login, and JWT token generation
+ * 
+ * Note: ChatGPT was used for syntax correction and debugging
  */
 class AuthService {
     constructor(database, jwtSecret) {

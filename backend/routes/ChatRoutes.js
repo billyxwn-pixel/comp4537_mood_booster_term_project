@@ -3,11 +3,14 @@ const router = express.Router();
 
 /**
  * Chat Routes
+ * 
+ * Note: ChatGPT was used for syntax correction and debugging
  */
 class ChatRoutes {
-    constructor(chatService, authMiddleware) {
+    constructor(chatService, authMiddleware, database) {
         this.chatService = chatService;
         this.authMiddleware = authMiddleware;
+        this.database = database;
         this.router = router;
         this.setupRoutes();
     }
@@ -31,6 +34,13 @@ class ChatRoutes {
 
                 const result = await this.chatService.sendMessage(userId, sanitizedMessage);
                 
+                // Track endpoint usage
+                if (this.database && userId) {
+                    this.database.incrementApiCalls(userId, 'POST', '/api/v1/chat/send').catch(err => {
+                        console.error('Error tracking endpoint usage:', err);
+                    });
+                }
+                
                 if (result.success) {
                     res.status(200).json(result);
                 } else {
@@ -49,6 +59,13 @@ class ChatRoutes {
             try {
                 const userId = req.user.userId;
                 const result = await this.chatService.getChatHistory(userId);
+                
+                // Track endpoint usage
+                if (this.database && userId) {
+                    this.database.incrementApiCalls(userId, 'GET', '/api/v1/chat/history').catch(err => {
+                        console.error('Error tracking endpoint usage:', err);
+                    });
+                }
                 
                 if (result.success) {
                     res.status(200).json(result);

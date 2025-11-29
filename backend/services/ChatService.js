@@ -3,6 +3,8 @@ const axios = require('axios');
 /**
  * Chat Service
  * Handles communication with LLM service
+ * 
+ * Note: ChatGPT was used for syntax correction and debugging
  */
 class ChatService {
     constructor(database, llmServiceUrl) {
@@ -39,8 +41,8 @@ class ChatService {
                 botResponse = "I'm having trouble connecting right now. Please try again later! 😊";
             }
 
-            // Increment API calls count
-            await this.database.incrementApiCalls(userId);
+            // Increment API calls count (tracking will be done by middleware)
+            // Note: Endpoint tracking is handled by StatsMiddleware
 
             // Save chat history
             await this.database.saveChatHistory(userId, userMessage, botResponse);
